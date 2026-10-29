@@ -93,7 +93,7 @@
 
   <section id="results" class="hidden">
     <div class="meta">
-      <span>총 <b id="total">0</b>명 참여 · 복호화 실패 <b id="failed">0</b>건 · <span id="status">연결 중…</span></span>
+      <span>총 <b id="total">0</b>표 (중복 투표 허용) · 복호화 실패 <b id="failed">0</b>건 · <span id="status">연결 중…</span></span>
       <span style="display:flex;gap:8px"><button class="btn ghost" id="csv">CSV 내려받기</button><button class="btn danger" id="forget">이 브라우저에서 키 삭제</button></span>
     </div>
 
@@ -105,8 +105,8 @@
     </div>
 
     <div class="section">
-      <h2>참여자</h2>
-      <table><thead><tr><th>이름</th><th>선택</th><th>시간</th></tr></thead><tbody id="voters"><tr><td colspan="3" class="empty">아직 투표가 없습니다.</td></tr></tbody></table>
+      <h2>투표 내역 <span class="msg">(한 사람이 여러 번 투표할 수 있어 같은 기기의 표는 기기 번호로 묶어 볼 수 있습니다)</span></h2>
+      <table><thead><tr><th>이름</th><th>선택</th><th>시간</th><th>기기</th></tr></thead><tbody id="voters"><tr><td colspan="4" class="empty">아직 투표가 없습니다.</td></tr></tbody></table>
     </div>
 
     <div class="section">
@@ -158,7 +158,7 @@
     const counts = {1:0,2:0,3:0,4:0}; let failed=0; rows=[];
     for(const [id,v] of Object.entries(voters||{})){
       if(!v || !v.enc) continue;
-      try { const d = await decrypt(v.enc); const c=Number(d.choice); if(counts[c]!==undefined){ counts[c]++; rows.push({id, name:d.name||"", choice:c, ts:v.ts||0}); } else failed++; }
+      try { const d = await decrypt(v.enc); const c=Number(d.choice); if(counts[c]!==undefined){ counts[c]++; rows.push({id, name:d.name||"", choice:c, ts:v.ts||0, device:(d.device||id).slice(0,6)}); } else failed++; }
       catch(e){ failed++; }
     }
     const total = rows.length; const max = Math.max(...Object.values(counts));
@@ -169,7 +169,7 @@
       const top = total>0 && counts[k]===max; el.classList.toggle("top", top); el.querySelector(".crown").classList.toggle("hidden", !top);
     }
     rows.sort((a,b)=>b.ts-a.ts);
-    $("#voters").innerHTML = rows.length ? rows.map(r=>`<tr><td>${esc(r.name)||'<span class="muted" style="color:#7B8294">익명</span>'}</td><td class="pick">${String(r.choice).padStart(2,"0")} ${esc(NAMES[r.choice])}</td><td class="muted">${fmt(r.ts)}</td></tr>`).join("") : '<tr><td colspan="3" class="empty">아직 투표가 없습니다.</td></tr>';
+    $("#voters").innerHTML = rows.length ? rows.map(r=>`<tr><td>${esc(r.name)||'<span class="muted" style="color:#7B8294">익명</span>'}</td><td class="pick">${String(r.choice).padStart(2,"0")} ${esc(NAMES[r.choice])}</td><td class="muted">${fmt(r.ts)}</td><td class="muted" title="같은 기기에서 보낸 표는 번호가 같습니다">${esc(r.device)}</td></tr>`).join("") : '<tr><td colspan="4" class="empty">아직 투표가 없습니다.</td></tr>';
     const cl = Object.values(comments||{}).filter(c=>c&&c.text).sort((a,b)=>(b.ts||0)-(a.ts||0));
     $("#ccount").textContent = cl.length;
     $("#clist").innerHTML = cl.length ? cl.map(c=>`<li class="citem"><div class="m"><span class="who">${esc(c.name||"익명")}</span><span>${fmt(c.ts)}</span></div><p>${esc(c.text)}</p></li>`).join("") : '<li class="empty">아직 의견이 없습니다.</li>';
@@ -180,7 +180,7 @@
   $("#keyPaste").addEventListener("click", () => { const t=$("#keyText").value.trim(); if(t) unlock(t, true); });
   $("#forget").addEventListener("click", () => { ls.del(KEY_LS); location.reload(); });
   $("#csv").addEventListener("click", () => {
-    const lines = [["이름","선택번호","선택","시간"], ...rows.map(r=>[r.name, r.choice, NAMES[r.choice], new Date(r.ts).toISOString()])];
+    const lines = [["이름","선택번호","선택","시간","기기"], ...rows.map(r=>[r.name, r.choice, NAMES[r.choice], new Date(r.ts).toISOString(), r.device])];
     const csv = "﻿" + lines.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download = "carepos-logo-vote.csv"; a.click();
   });
