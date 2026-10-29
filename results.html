@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>CarePOS 투표 결과 (담당자용)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cpath d='M0 200C0 35.3 35.3 0 200 0C364.7 0 400 35.3 400 200C400 364.7 364.7 400 200 400C35.3 400 0 364.7 0 200Z' fill='%23155787'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root{--brand:#1A6FB3;--brand-deep:#155787;--brand-grad:linear-gradient(135deg,#1D74B1,#155787);--ink:#0D0A11;--body:#404656;--muted:#7B8294;--line:#CED4DA;--line-soft:#E6EAEF;--panel:#F7F9FA;--card:#fff;--tint:#EAF4FC;--ok:#1E8E5A;--warn:#B7791F;--err:#C0392B;--radius:20px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--panel);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;letter-spacing:-.01em;line-height:1.5;-webkit-font-smoothing:antialiased;word-break:keep-all}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  @media (max-width:640px){.wrap{padding:0 16px}}
+  .top{background:#fff;border-bottom:1px solid var(--line-soft)}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+  .brand img{height:18px}
+  .brand span{color:var(--muted);font-weight:500;white-space:nowrap}
+  @media (max-width:640px){.brand span{display:none}}
+  .top a.back{white-space:nowrap}
+  .top a.back{font-size:14px;color:var(--body);padding:8px 12px;border-radius:999px}
+  .top a.back:hover{background:var(--panel)}
+  main{padding:40px 0 80px}
+  h1{font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;margin:0 0 6px}
+  .sub{color:var(--body);margin:0 0 24px;font-size:15px}
+  .card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:22px}
+  .lock{display:grid;gap:14px}
+  .lock p{margin:0;font-size:14px;color:var(--body)}
+  .lock .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:14px;padding:10px 16px;border-radius:10px;background:var(--brand);color:#fff}
+  .btn:hover{background:var(--brand-deep)}
+  .btn.ghost{background:var(--tint);color:var(--brand)}
+  .btn.ghost:hover{background:#dcecf9}
+  .btn.danger{background:#fdeceb;color:var(--err)}
+  textarea{font:inherit;font-size:13px;width:100%;min-height:88px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+  .msg{font-size:13px;color:var(--muted)}
+  .msg.err{color:var(--err)}
+  .msg.ok{color:var(--ok)}
+  .hidden{display:none !important}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 18px}
+  @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--card);border:2px solid var(--line-soft);border-radius:var(--radius);padding:18px 16px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;position:relative}
+  .stat.top{border-color:var(--brand)}
+  .stat .crown{position:absolute;top:10px;right:12px;font-size:12px;font-weight:700;color:var(--brand);background:var(--tint);padding:2px 8px;border-radius:999px}
+  .stat img{width:84px}
+  .stat .n{font-size:12px;color:var(--brand);font-weight:700;letter-spacing:.04em}
+  .stat .t{font-size:15px;font-weight:700}
+  .stat .cnt{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.02em}
+  .stat .cnt small{font-size:13px;color:var(--muted);font-weight:600;margin-left:3px}
+  .bar{width:100%;height:8px;border-radius:999px;background:var(--line-soft);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--brand-grad);transition:width .4s}
+  .stat .pct{font-size:13px;color:var(--muted)}
+  .meta{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 28px;font-size:14px;color:var(--body)}
+  h2{font-size:18px;margin:0 0 12px}
+  table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--line-soft)}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  th{background:var(--panel);font-weight:700;font-size:13px;color:var(--body)}
+  tr:last-child td{border-bottom:0}
+  td.pick{font-weight:700;color:var(--brand);white-space:nowrap}
+  td.muted{color:var(--muted);white-space:nowrap}
+  .section{margin:0 0 32px}
+  .clist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .citem{background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:14px 16px}
+  .citem .m{display:flex;gap:8px;font-size:13px;color:var(--muted);margin:0 0 4px}
+  .citem .who{font-weight:700;color:var(--ink)}
+  .citem p{margin:0;font-size:14px;color:var(--body);white-space:pre-wrap;overflow-wrap:anywhere}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:24px 0}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./"><img src="assets/wordmark.svg" alt="CarePOS"><span>투표 결과 · 담당자용</span></a>
+  <a class="back" href="./">← 시안 페이지</a>
+</div></header>
+
+<main class="wrap">
+  <h1>로고 투표 결과</h1>
+  <p class="sub">투표 내용은 암호화되어 저장됩니다. 이 페이지는 담당자의 개인키로만 복호화해 집계합니다.</p>
+
+  <section class="card lock" id="lock">
+    <p><b>개인키를 불러와 주세요.</b> 처음 한 번만 불러오면 이 브라우저에 저장되어 다음부터는 바로 결과가 보입니다. 개인키는 서버로 전송되지 않습니다.</p>
+    <div class="row">
+      <label class="btn"><input type="file" id="keyFile" accept="application/json,.json" hidden>개인키 파일 선택 (admin-private-key.json)</label>
+      <span class="msg" id="lockMsg"></span>
+    </div>
+    <details><summary class="msg" style="cursor:pointer">또는 키 내용을 직접 붙여넣기</summary>
+      <div style="display:grid;gap:8px;margin-top:8px"><textarea id="keyText" placeholder='{"kty":"RSA", ...}'></textarea><div><button class="btn ghost" id="keyPaste">붙여넣은 키 사용</button></div></div>
+    </details>
+  </section>
+
+  <section id="results" class="hidden">
+    <div class="meta">
+      <span>총 <b id="total">0</b>명 참여 · 복호화 실패 <b id="failed">0</b>건 · <span id="status">연결 중…</span></span>
+      <span style="display:flex;gap:8px"><button class="btn ghost" id="csv">CSV 내려받기</button><button class="btn danger" id="forget">이 브라우저에서 키 삭제</button></span>
+    </div>
+
+    <div class="stats" id="stats">
+      <div class="stat" data-k="1"><span class="crown hidden">1위</span><img src="assets/symbol-01.svg" alt=""><span class="n">CANDIDATE 01</span><span class="t">케어 카운터</span><span class="cnt"><b>0</b><small>표</small></span><span class="bar"><i></i></span><span class="pct">0%</span></div>
+      <div class="stat" data-k="2"><span class="crown hidden">1위</span><img src="assets/symbol-02.svg" alt=""><span class="n">CANDIDATE 02</span><span class="t">틸트 터미널</span><span class="cnt"><b>0</b><small>표</small></span><span class="bar"><i></i></span><span class="pct">0%</span></div>
+      <div class="stat" data-k="3"><span class="crown hidden">1위</span><img src="assets/symbol-03.svg" alt=""><span class="n">CANDIDATE 03</span><span class="t">네이밍 표기 워드마크</span><span class="cnt"><b>0</b><small>표</small></span><span class="bar"><i></i></span><span class="pct">0%</span></div>
+      <div class="stat" data-k="4"><span class="crown hidden">1위</span><img src="assets/symbol-04.svg" alt=""><span class="n">CANDIDATE 04</span><span class="t">케어 모니터</span><span class="cnt"><b>0</b><small>표</small></span><span class="bar"><i></i></span><span class="pct">0%</span></div>
+    </div>
+
+    <div class="section">
+      <h2>참여자</h2>
+      <table><thead><tr><th>이름</th><th>선택</th><th>시간</th></tr></thead><tbody id="voters"><tr><td colspan="3" class="empty">아직 투표가 없습니다.</td></tr></tbody></table>
+    </div>
+
+    <div class="section">
+      <h2>의견 <span class="msg">(<span id="ccount">0</span>건)</span></h2>
+      <ul class="clist" id="clist"><li class="empty">아직 의견이 없습니다.</li></ul>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+  const FIREBASE = {
+    apiKey: "AIzaSyCt49JhG33OA_A-vA2u6goH2DS5J9aFvaI",
+    authDomain: "team-dinner-vote-2609.firebaseapp.com",
+    databaseURL: "https://team-dinner-vote-2609-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "team-dinner-vote-2609",
+    appId: "1:1087698652084:web:a6ebae574c513d0349c0e1"
+  };
+  const POLL_PATH = "polls/carepos-logo-vote";
+  const NAMES = {1:"케어 카운터",2:"틸트 터미널",3:"네이밍 표기 워드마크",4:"케어 모니터"};
+  const KEY_LS = "carepos_admin_private_key";
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const fmt = ts => ts ? new Date(ts).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
+  const ls = { get(k){ try{return localStorage.getItem(k);}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch{} }, del(k){ try{localStorage.removeItem(k);}catch{} } };
+
+  let privKey = null, voters = null, comments = null, rows = [];
+
+  async function importKey(jwkText){
+    const jwk = JSON.parse(jwkText);
+    if(jwk.kty!=="RSA" || !jwk.d) throw new Error("RSA 개인키(JWK)가 아닙니다.");
+    return crypto.subtle.importKey("jwk", jwk, { name:"RSA-OAEP", hash:"SHA-256" }, false, ["decrypt"]);
+  }
+  async function decrypt(b64){
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const buf = await crypto.subtle.decrypt({ name:"RSA-OAEP" }, privKey, bytes);
+    return JSON.parse(new TextDecoder().decode(buf));
+  }
+  async function unlock(jwkText, remember){
+    try {
+      privKey = await importKey(jwkText);
+      if(remember) ls.set(KEY_LS, jwkText);
+      $("#lock").classList.add("hidden"); $("#results").classList.remove("hidden");
+      await render();
+    } catch(e){ console.error(e); const m=$("#lockMsg"); m.className="msg err"; m.textContent="키를 불러오지 못했습니다: "+(e.message||e); }
+  }
+
+  async function render(){
+    if(!privKey || voters===null) return;
+    const counts = {1:0,2:0,3:0,4:0}; let failed=0; rows=[];
+    for(const [id,v] of Object.entries(voters||{})){
+      if(!v || !v.enc) continue;
+      try { const d = await decrypt(v.enc); const c=Number(d.choice); if(counts[c]!==undefined){ counts[c]++; rows.push({id, name:d.name||"", choice:c, ts:v.ts||0}); } else failed++; }
+      catch(e){ failed++; }
+    }
+    const total = rows.length; const max = Math.max(...Object.values(counts));
+    $("#total").textContent = total; $("#failed").textContent = failed;
+    for(const k of [1,2,3,4]){
+      const el = document.querySelector(`.stat[data-k="${k}"]`); const pct = total ? Math.round(counts[k]/total*100) : 0;
+      el.querySelector(".cnt b").textContent = counts[k]; el.querySelector(".bar i").style.width = pct+"%"; el.querySelector(".pct").textContent = pct+"%";
+      const top = total>0 && counts[k]===max; el.classList.toggle("top", top); el.querySelector(".crown").classList.toggle("hidden", !top);
+    }
+    rows.sort((a,b)=>b.ts-a.ts);
+    $("#voters").innerHTML = rows.length ? rows.map(r=>`<tr><td>${esc(r.name)||'<span class="muted" style="color:#7B8294">익명</span>'}</td><td class="pick">${String(r.choice).padStart(2,"0")} ${esc(NAMES[r.choice])}</td><td class="muted">${fmt(r.ts)}</td></tr>`).join("") : '<tr><td colspan="3" class="empty">아직 투표가 없습니다.</td></tr>';
+    const cl = Object.values(comments||{}).filter(c=>c&&c.text).sort((a,b)=>(b.ts||0)-(a.ts||0));
+    $("#ccount").textContent = cl.length;
+    $("#clist").innerHTML = cl.length ? cl.map(c=>`<li class="citem"><div class="m"><span class="who">${esc(c.name||"익명")}</span><span>${fmt(c.ts)}</span></div><p>${esc(c.text)}</p></li>`).join("") : '<li class="empty">아직 의견이 없습니다.</li>';
+  }
+
+  // key sources
+  $("#keyFile").addEventListener("change", async e => { const f=e.target.files[0]; if(f) unlock(await f.text(), true); });
+  $("#keyPaste").addEventListener("click", () => { const t=$("#keyText").value.trim(); if(t) unlock(t, true); });
+  $("#forget").addEventListener("click", () => { ls.del(KEY_LS); location.reload(); });
+  $("#csv").addEventListener("click", () => {
+    const lines = [["이름","선택번호","선택","시간"], ...rows.map(r=>[r.name, r.choice, NAMES[r.choice], new Date(r.ts).toISOString()])];
+    const csv = "﻿" + lines.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download = "carepos-logo-vote.csv"; a.click();
+  });
+
+  // data
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
+    const { getDatabase, ref, onValue } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js");
+    const db = getDatabase(initializeApp(FIREBASE));
+    onValue(ref(db, POLL_PATH+"/voters"), s => { voters = s.val()||{}; $("#status").textContent="실시간 연결됨"; render(); });
+    onValue(ref(db, POLL_PATH+"/comments"), s => { comments = s.val()||{}; render(); });
+  } catch(e){ console.error(e); $("#status").textContent = "DB 연결 실패"; }
+
+  const saved = ls.get(KEY_LS); if(saved) unlock(saved, false);
+</script>
+</body>
+</html>

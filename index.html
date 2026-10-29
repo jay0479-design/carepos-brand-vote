@@ -106,7 +106,8 @@
   .vcard.mine{border-color:var(--brand);box-shadow:0 0 0 4px rgba(26,111,179,.12)}
   .vcard .chk{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;display:none;place-items:center;font-size:13px;font-weight:800}
   .vcard.mine .chk{display:grid}
-  .vcard img{width:96px}
+  .vcard img{width:96px;margin-bottom:4px}
+  .vcard .t{margin-bottom:6px}
   .vcard .n{font-size:12px;color:var(--brand);font-weight:700;letter-spacing:.04em}
   .vcard .t{font-size:17px;font-weight:700}
   .vcard .cnt{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1}
@@ -260,7 +261,7 @@
     <div class="sec-head">
       <p class="eyebrow">LOGO VOTE</p>
       <h2>어떤 시안이 가장 CarePOS다운가요?</h2>
-      <p>카드를 누르면 바로 투표됩니다. 기기당 1표이며, 다른 카드를 누르면 선택이 바뀝니다.</p>
+      <p>카드를 누르면 바로 투표됩니다. 기기당 1표이며, 다른 카드를 누르면 선택이 바뀝니다. 투표 내용은 암호화되어 저장되며 집계 결과는 담당자만 확인할 수 있습니다.</p>
       <div class="status" id="status"><span class="dot"></span><span id="statusText">연결 중…</span></div>
     </div>
 
@@ -270,10 +271,10 @@
     </div>
 
     <div class="cards" id="cards">
-      <button class="vcard" data-vote="1"><span class="chk">✓</span><img src="assets/symbol-01.svg" alt=""><span class="n">CANDIDATE 01</span><span class="t">케어 카운터</span><span class="cnt"><b data-cnt="1">0</b><small>표</small></span><span class="bar"><i data-bar="1"></i></span><span class="pct" data-pct="1">0%</span></button>
-      <button class="vcard" data-vote="2"><span class="chk">✓</span><img src="assets/symbol-02.svg" alt=""><span class="n">CANDIDATE 02</span><span class="t">틸트 터미널</span><span class="cnt"><b data-cnt="2">0</b><small>표</small></span><span class="bar"><i data-bar="2"></i></span><span class="pct" data-pct="2">0%</span></button>
-      <button class="vcard" data-vote="3"><span class="chk">✓</span><img src="assets/symbol-03.svg" alt=""><span class="n">CANDIDATE 03</span><span class="t">네이밍 표기 워드마크</span><span class="cnt"><b data-cnt="3">0</b><small>표</small></span><span class="bar"><i data-bar="3"></i></span><span class="pct" data-pct="3">0%</span></button>
-      <button class="vcard" data-vote="4"><span class="chk">✓</span><img src="assets/symbol-04.svg" alt=""><span class="n">CANDIDATE 04</span><span class="t">케어 모니터</span><span class="cnt"><b data-cnt="4">0</b><small>표</small></span><span class="bar"><i data-bar="4"></i></span><span class="pct" data-pct="4">0%</span></button>
+      <button class="vcard" data-vote="1"><span class="chk">✓</span><img src="assets/symbol-01.svg" alt=""><span class="n">CANDIDATE 01</span><span class="t">케어 카운터</span></button>
+      <button class="vcard" data-vote="2"><span class="chk">✓</span><img src="assets/symbol-02.svg" alt=""><span class="n">CANDIDATE 02</span><span class="t">틸트 터미널</span></button>
+      <button class="vcard" data-vote="3"><span class="chk">✓</span><img src="assets/symbol-03.svg" alt=""><span class="n">CANDIDATE 03</span><span class="t">네이밍 표기 워드마크</span></button>
+      <button class="vcard" data-vote="4"><span class="chk">✓</span><img src="assets/symbol-04.svg" alt=""><span class="n">CANDIDATE 04</span><span class="t">케어 모니터</span></button>
     </div>
 
     <div class="vote-foot">
@@ -295,7 +296,7 @@
       <div class="two"><input type="text" id="cName" maxlength="20" placeholder="이름 (선택)" autocomplete="off"></div>
       <textarea id="cText" maxlength="300" placeholder="의견을 입력하세요 (최대 300자)" required></textarea>
       <div class="foot">
-        <span class="hint"><span id="cCount">0</span>/300 · 내가 투표한 시안이 함께 표시됩니다</span>
+        <span class="hint"><span id="cCount">0</span>/300</span>
         <button class="btn" type="submit" id="cSubmit">의견 남기기</button>
       </div>
     </form>
@@ -323,6 +324,14 @@
     appId: "1:1087698652084:web:a6ebae574c513d0349c0e1"
   };
   const POLL_PATH = "polls/carepos-logo-vote";
+  // 투표 내용은 아래 공개키로 암호화되어 저장됩니다. 복호화(집계)는 개인키를 가진 담당자만 가능합니다.
+  const PUBLIC_JWK = {"key_ops":["encrypt"],"ext":true,"alg":"RSA-OAEP-256","kty":"RSA","n":"mLF9zjjkFVcvWlWmtz_nHKuunmFEcNw2cuYKyR2ca4QJa9MfjSb26HPknSP_W0PMYfFUspu1qwgCkIqTmlJ_xE4_OkQ3UahdinVfQsXz7ioOF2lQE2AlDmNBBgkD6qiQ0j9JPhENUMQNHaisvLQ50p5YMIvMBOOLZp9isnI8mPxaFCTtxl_ee-tPPzJUB0jTRItitCQBtreNAKKCjndlZbq8FOwwx5zpDtQElYTnkqsrLxv5G1qLifp2WFtvoSUleVAsCUJ8KDVYmAQbnEXfeFCjX4on99lMF13OmrRUbSmnzIz_kraIMwfJSPX9ibAn0Hwa_6OjGKHQxCCcJ5LhDQ","e":"AQAB"};
+  let pubKey = null;
+  async function encryptVote(obj){
+    if(!pubKey) pubKey = await crypto.subtle.importKey("jwk", PUBLIC_JWK, { name:"RSA-OAEP", hash:"SHA-256" }, false, ["encrypt"]);
+    const buf = await crypto.subtle.encrypt({ name:"RSA-OAEP" }, pubKey, new TextEncoder().encode(JSON.stringify(obj)));
+    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  }
   const NAMES = {1:"케어 카운터",2:"틸트 터미널",3:"네이밍 표기 워드마크",4:"케어 모니터"};
 
   // ---- helpers --------------------------------------------------------------
@@ -349,16 +358,11 @@
 
   // ---- render ---------------------------------------------------------------
   let myChoice = Number(ls.get("carepos_vote_choice")) || 0;
+  let lastVoters = null;
   function renderVotes(voters){
-    const counts = {1:0,2:0,3:0,4:0}; let total=0;
-    Object.values(voters||{}).forEach(v => { const c=Number(v&&v.choice); if(counts[c]!==undefined){ counts[c]++; total++; } });
-    if(voters && voters[deviceId]) myChoice = Number(voters[deviceId].choice)||myChoice;
-    for(const k of [1,2,3,4]){
-      const pct = total ? Math.round(counts[k]/total*100) : 0;
-      $(`[data-cnt="${k}"]`).textContent = counts[k];
-      $(`[data-bar="${k}"]`).style.width = pct+"%";
-      $(`[data-pct="${k}"]`).textContent = pct+"%";
-    }
+    lastVoters = voters;
+    const total = Object.values(voters||{}).filter(v => v && v.enc).length;
+    if(!(voters && voters[deviceId])) myChoice = 0; // 서버에 내 표가 없으면(초기화된 경우) 선택 표시를 지움
     $("#total").textContent = total;
     $$(".vcard").forEach(c => c.classList.toggle("mine", Number(c.dataset.vote)===myChoice));
     $$(".cand .act .btn").forEach(b => { const on = Number(b.dataset.vote)===myChoice; b.textContent = on ? "✓ 투표한 시안" : "이 시안에 투표"; b.classList.toggle("ghost", !on); });
@@ -368,7 +372,7 @@
     const list = Object.entries(obj||{}).map(([id,c])=>({id,...c})).filter(c=>c&&c.text).sort((a,b)=>(b.ts||0)-(a.ts||0));
     const ul = $("#clist");
     if(!list.length){ ul.innerHTML = '<li class="empty">아직 의견이 없습니다. 첫 의견을 남겨 주세요.</li>'; return; }
-    ul.innerHTML = list.map(c => `<li class="citem"><div class="meta"><span class="who">${esc(c.name||"익명")}</span>${c.choice&&NAMES[c.choice]?`<span class="pick">${String(c.choice).padStart(2,"0")} ${esc(NAMES[c.choice])}</span>`:""}<span>${rel(Number(c.ts)||Date.now())}</span></div><p>${esc(c.text)}</p></li>`).join("");
+    ul.innerHTML = list.map(c => `<li class="citem"><div class="meta"><span class="who">${esc(c.name||"익명")}</span><span>${rel(Number(c.ts)||Date.now())}</span></div><p>${esc(c.text)}</p></li>`).join("");
   }
 
   // ---- storage backends -----------------------------------------------------
@@ -382,8 +386,8 @@
     await new Promise((res, rej) => { const t=setTimeout(()=>rej(new Error("timeout")),8000); onValue(vref, s => { clearTimeout(t); renderVotes(s.val()); res(); }, e => { clearTimeout(t); rej(e); }); });
     onValue(query(cref, limitToLast(300)), s => renderComments(s.val()));
     return {
-      vote: (choice, name) => set(ref(db, `${POLL_PATH}/voters/${deviceId}`), { choice, name, ts: Date.now() }),
-      comment: (name, text, choice) => push(cref, { name, text, choice: choice||null, ts: Date.now() })
+      vote: async (choice, name) => set(ref(db, `${POLL_PATH}/voters/${deviceId}`), { enc: await encryptVote({ choice, name }), ts: Date.now() }),
+      comment: (name, text) => push(cref, { name, text, ts: Date.now() })
     };
   }
   function initLocal(){
@@ -391,17 +395,17 @@
     const voters = read("carepos_local_voters"), comments = read("carepos_local_comments");
     renderVotes(voters); renderComments(comments);
     return {
-      vote: async (choice, name) => { voters[deviceId]={choice,name,ts:Date.now()}; ls.set("carepos_local_voters", JSON.stringify(voters)); renderVotes(voters); },
-      comment: async (name, text, choice) => { comments["c"+Date.now()]={name,text,choice,ts:Date.now()}; ls.set("carepos_local_comments", JSON.stringify(comments)); renderComments(comments); }
+      vote: async (choice, name) => { voters[deviceId]={enc: await encryptVote({choice,name}),ts:Date.now()}; ls.set("carepos_local_voters", JSON.stringify(voters)); renderVotes(voters); },
+      comment: async (name, text) => { comments["c"+Date.now()]={name,text,ts:Date.now()}; ls.set("carepos_local_comments", JSON.stringify(comments)); renderComments(comments); }
     };
   }
-  try { backend = await initFirebase(); setStatus("live","실시간 집계 중 · 모든 참여자의 투표가 함께 반영됩니다"); }
+  try { backend = await initFirebase(); setStatus("live","연결됨 · 투표는 암호화되어 저장되고 결과는 담당자만 열람합니다"); }
   catch(e){ console.warn("Firebase unavailable, falling back to local mode", e); backend = initLocal(); setStatus("local","오프라인 모드 · 이 기기에서만 저장됩니다 (네트워크를 확인해 주세요)"); }
 
   // ---- actions --------------------------------------------------------------
   async function vote(choice){
     const name = ($("#voterName").value||"").trim().slice(0,20);
-    try { await backend.vote(choice, name); myChoice = choice; ls.set("carepos_vote_choice", String(choice)); toast(`${String(choice).padStart(2,"0")} ${NAMES[choice]}에 투표했습니다`); }
+    try { await backend.vote(choice, name); myChoice = choice; ls.set("carepos_vote_choice", String(choice)); renderVotes(lastVoters); toast(`${String(choice).padStart(2,"0")} ${NAMES[choice]}에 투표했습니다`); }
     catch(e){ console.error(e); toast("투표 저장에 실패했습니다. 잠시 후 다시 시도해 주세요."); }
   }
   $$("[data-vote]").forEach(el => el.addEventListener("click", () => { vote(Number(el.dataset.vote)); if(el.closest(".cand")) $("#vote").scrollIntoView({behavior:"smooth",block:"start"}); }));
@@ -411,7 +415,7 @@
     const text = $("#cText").value.trim().slice(0,300); if(!text) return;
     const name = ($("#cName").value||"").trim().slice(0,20);
     const btn = $("#cSubmit"); btn.disabled = true;
-    try { await backend.comment(name, text, myChoice||null); $("#cText").value=""; $("#cCount").textContent="0"; toast("의견이 등록되었습니다. 감사합니다!"); }
+    try { await backend.comment(name, text); $("#cText").value=""; $("#cCount").textContent="0"; toast("의견이 등록되었습니다. 감사합니다!"); }
     catch(err){ console.error(err); toast("의견 저장에 실패했습니다. 잠시 후 다시 시도해 주세요."); }
     btn.disabled = false;
   });
