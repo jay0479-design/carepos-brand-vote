@@ -147,9 +147,15 @@
     if(jwk.kty!=="RSA" || !jwk.d) throw new Error("RSA 개인키(JWK)가 아닙니다.");
     return crypto.subtle.importKey("jwk", jwk, { name:"RSA-OAEP", hash:"SHA-256" }, false, ["decrypt"]);
   }
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   async function decrypt(b64){
-    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    const buf = await crypto.subtle.decrypt({ name:"RSA-OAEP" }, privKey, bytes);
+    const buf = await crypto.subtle.decrypt({ name:"RSA-OAEP" }, privKey, unb64(b64));
+    return JSON.parse(new TextDecoder().decode(buf));
+  }
+  async function decryptLong(o){
+    const raw = await crypto.subtle.decrypt({ name:"RSA-OAEP" }, privKey, unb64(o.k));
+    const aes = await crypto.subtle.importKey("raw", raw, { name:"AES-GCM" }, false, ["decrypt"]);
+    const buf = await crypto.subtle.decrypt({ name:"AES-GCM", iv: unb64(o.iv) }, aes, unb64(o.c));
     return JSON.parse(new TextDecoder().decode(buf));
   }
   async function unlock(jwkText, remember){
@@ -178,9 +184,15 @@
     }
     rows.sort((a,b)=>b.ts-a.ts);
     $("#voters").innerHTML = rows.length ? rows.map(r=>`<tr><td>${esc(r.name)||'<span class="muted" style="color:#7B8294">익명</span>'}</td><td class="pick">${String(r.choice).padStart(2,"0")} ${esc(NAMES[r.choice])}</td><td class="muted">${fmt(r.ts)}</td><td class="muted" title="같은 기기에서 보낸 표는 번호가 같습니다">${esc(r.device)}</td><td class="act"><button class="btn sm del" data-del-vote="${esc(r.id)}">삭제</button></td></tr>`).join("") : '<tr><td colspan="5" class="empty">아직 투표가 없습니다.</td></tr>';
-    const cl = Object.entries(comments||{}).map(([id,c])=>({id,...c})).filter(c=>c&&c.text).sort((a,b)=>(b.ts||0)-(a.ts||0));
+    const cl = [];
+    for(const [id,c] of Object.entries(comments||{})){
+      if(!c) continue;
+      if(c.c && c.k && c.iv){ try { const d = await decryptLong(c); cl.push({ id, name:d.name||"", text:d.text||"", ts:c.ts||0, device:(d.device||"").slice(0,6) }); } catch(e){ cl.push({ id, name:"(복호화 실패)", text:"", ts:c.ts||0, device:"" }); } }
+      else if(c.text){ cl.push({ id, name:c.name||"", text:c.text, ts:c.ts||0, device:"" }); }
+    }
+    cl.sort((a,b)=>(b.ts||0)-(a.ts||0));
     $("#ccount").textContent = cl.length;
-    $("#clist").innerHTML = cl.length ? cl.map(c=>`<li class="citem"><button class="btn sm del" data-del-comment="${esc(c.id)}">삭제</button><div class="m"><span class="who">${esc(c.name||"익명")}</span><span>${fmt(c.ts)}</span></div><p>${esc(c.text)}</p></li>`).join("") : '<li class="empty">아직 의견이 없습니다.</li>';
+    $("#clist").innerHTML = cl.length ? cl.map(c=>`<li class="citem"><button class="btn sm del" data-del-comment="${esc(c.id)}">삭제</button><div class="m"><span class="who">${esc(c.name||"익명")}</span><span>${fmt(c.ts)}</span>${c.device?`<span title="같은 기기에서 보낸 의견은 번호가 같습니다">기기 ${esc(c.device)}</span>`:""}</div><p>${esc(c.text)}</p></li>`).join("") : '<li class="empty">아직 의견이 없습니다.</li>';
   }
 
   // key sources
@@ -213,7 +225,7 @@
     const v = e.target.closest("[data-del-vote]"); const c = e.target.closest("[data-del-comment]");
     if(v){ const r = rows.find(x=>x.id===v.dataset.delVote); const who = r ? `${r.name||"익명"} · ${String(r.choice).padStart(2,"0")} ${NAMES[r.choice]} · ${fmt(r.ts)}` : v.dataset.delVote;
       if(confirm(`이 투표를 삭제할까요?\n\n${who}\n\n삭제하면 되돌릴 수 없습니다.`)) remove(`${POLL_PATH}/voters/${v.dataset.delVote}`, "투표 1건"); }
-    if(c){ const cm = (comments||{})[c.dataset.delComment]; const txt = cm ? `${cm.name||"익명"}: ${String(cm.text).slice(0,60)}` : c.dataset.delComment;
+    if(c){ const li = c.closest(".citem"); const txt = li ? `${li.querySelector(".who").textContent}: ${li.querySelector("p").textContent.slice(0,60)}` : c.dataset.delComment;
       if(confirm(`이 의견을 삭제할까요?\n\n${txt}\n\n삭제하면 되돌릴 수 없습니다.`)) remove(`${POLL_PATH}/comments/${c.dataset.delComment}`, "의견 1건"); }
   });
   $("#clearVotes").addEventListener("click", () => {

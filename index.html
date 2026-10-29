@@ -149,6 +149,7 @@
   .cform textarea{min-height:92px;resize:vertical}
   .cform .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
   .cform .hint{font-size:13px;color:var(--muted)}
+  .ccount-note{margin:0;font-size:14px;color:var(--muted);text-align:center;padding:8px 0}
   .clist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
   .citem{background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
   .citem .meta{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:0 0 6px}
@@ -315,7 +316,7 @@
     <div class="sec-head">
       <p class="eyebrow">COMMENTS</p>
       <h2>의견을 남겨 주세요</h2>
-      <p>좋았던 점, 아쉬운 점, 조합 아이디어 등 무엇이든 짧게 적어 주시면 됩니다.</p>
+      <p>좋았던 점, 아쉬운 점, 조합 아이디어 등 무엇이든 짧게 적어 주시면 됩니다. 남겨 주신 의견은 암호화되어 저장되며 <b>담당자만 확인</b>합니다. 다른 참여자에게는 보이지 않습니다.</p>
     </div>
 
     <form class="cform" id="cform">
@@ -327,7 +328,7 @@
       </div>
     </form>
 
-    <ul class="clist" id="clist"><li class="empty">아직 의견이 없습니다. 첫 의견을 남겨 주세요.</li></ul>
+    <p class="ccount-note">지금까지 <b id="commentTotal">0</b>건의 의견이 접수되었습니다. 의견 내용은 담당자만 확인할 수 있습니다.</p>
   </div>
 </section>
 
@@ -373,10 +374,20 @@
   // 투표 내용은 아래 공개키로 암호화되어 저장됩니다. 복호화(집계)는 개인키를 가진 담당자만 가능합니다.
   const PUBLIC_JWK = {"key_ops":["encrypt"],"ext":true,"alg":"RSA-OAEP-256","kty":"RSA","n":"mLF9zjjkFVcvWlWmtz_nHKuunmFEcNw2cuYKyR2ca4QJa9MfjSb26HPknSP_W0PMYfFUspu1qwgCkIqTmlJ_xE4_OkQ3UahdinVfQsXz7ioOF2lQE2AlDmNBBgkD6qiQ0j9JPhENUMQNHaisvLQ50p5YMIvMBOOLZp9isnI8mPxaFCTtxl_ee-tPPzJUB0jTRItitCQBtreNAKKCjndlZbq8FOwwx5zpDtQElYTnkqsrLxv5G1qLifp2WFtvoSUleVAsCUJ8KDVYmAQbnEXfeFCjX4on99lMF13OmrRUbSmnzIz_kraIMwfJSPX9ibAn0Hwa_6OjGKHQxCCcJ5LhDQ","e":"AQAB"};
   let pubKey = null;
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  async function getPubKey(){ if(!pubKey) pubKey = await crypto.subtle.importKey("jwk", PUBLIC_JWK, { name:"RSA-OAEP", hash:"SHA-256" }, false, ["encrypt"]); return pubKey; }
   async function encryptVote(obj){
-    if(!pubKey) pubKey = await crypto.subtle.importKey("jwk", PUBLIC_JWK, { name:"RSA-OAEP", hash:"SHA-256" }, false, ["encrypt"]);
-    const buf = await crypto.subtle.encrypt({ name:"RSA-OAEP" }, pubKey, new TextEncoder().encode(JSON.stringify(obj)));
-    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const buf = await crypto.subtle.encrypt({ name:"RSA-OAEP" }, await getPubKey(), new TextEncoder().encode(JSON.stringify(obj)));
+    return b64(buf);
+  }
+  // 긴 본문(의견)은 의견마다 AES 키를 만들어 본문을 암호화하고, 그 키를 RSA 공개키로 잠급니다.
+  async function encryptLong(obj){
+    const aes = await crypto.subtle.generateKey({ name:"AES-GCM", length:256 }, true, ["encrypt"]);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const c = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, aes, new TextEncoder().encode(JSON.stringify(obj)));
+    const raw = await crypto.subtle.exportKey("raw", aes);
+    const k = await crypto.subtle.encrypt({ name:"RSA-OAEP" }, await getPubKey(), raw);
+    return { k: b64(k), iv: b64(iv), c: b64(c) };
   }
   const NAMES = {1:"케어 카운터",2:"틸트 터미널",3:"네이밍 표기 워드마크",4:"케어 모니터"};
 
@@ -416,10 +427,8 @@
     $("#mine").textContent = mine.length ? `내 투표 ${myTotal()}회: ${mine.join(", ")}` : "아직 투표하지 않았습니다.";
   }
   function renderComments(obj){
-    const list = Object.entries(obj||{}).map(([id,c])=>({id,...c})).filter(c=>c&&c.text).sort((a,b)=>(b.ts||0)-(a.ts||0));
-    const ul = $("#clist");
-    if(!list.length){ ul.innerHTML = '<li class="empty">아직 의견이 없습니다. 첫 의견을 남겨 주세요.</li>'; return; }
-    ul.innerHTML = list.map(c => `<li class="citem"><div class="meta"><span class="who">${esc(c.name||"익명")}</span><span>${rel(Number(c.ts)||Date.now())}</span></div><p>${esc(c.text)}</p></li>`).join("");
+    const n = Object.values(obj||{}).filter(c => c && (c.c || c.text)).length;
+    $("#commentTotal").textContent = n;
   }
 
   // ---- storage backends -----------------------------------------------------
@@ -431,10 +440,10 @@
     const db = getDatabase(initializeApp(FIREBASE));
     const vref = ref(db, POLL_PATH+"/voters"), cref = ref(db, POLL_PATH+"/comments");
     await new Promise((res, rej) => { const t=setTimeout(()=>rej(new Error("timeout")),8000); onValue(vref, s => { clearTimeout(t); renderVotes(s.val()); res(); }, e => { clearTimeout(t); rej(e); }); });
-    onValue(query(cref, limitToLast(300)), s => renderComments(s.val()));
+    onValue(cref, s => renderComments(s.val()));
     return {
       vote: async (choice, name) => push(vref, { enc: await encryptVote({ choice, name, device: deviceId }), ts: Date.now() }),
-      comment: (name, text) => push(cref, { name, text, ts: Date.now() })
+      comment: async (name, text) => push(cref, { ...(await encryptLong({ name, text, device: deviceId })), ts: Date.now() })
     };
   }
   function initLocal(){
@@ -443,7 +452,7 @@
     renderVotes(voters); renderComments(comments);
     return {
       vote: async (choice, name) => { voters["v"+Date.now()]={enc: await encryptVote({choice,name,device:deviceId}),ts:Date.now()}; ls.set("carepos_local_voters", JSON.stringify(voters)); renderVotes(voters); },
-      comment: async (name, text) => { comments["c"+Date.now()]={name,text,ts:Date.now()}; ls.set("carepos_local_comments", JSON.stringify(comments)); renderComments(comments); }
+      comment: async (name, text) => { comments["c"+Date.now()]={...(await encryptLong({name,text,device:deviceId})),ts:Date.now()}; ls.set("carepos_local_comments", JSON.stringify(comments)); renderComments(comments); }
     };
   }
   try { backend = await initFirebase(); setStatus("live","연결됨 · 투표는 암호화되어 저장되고 결과는 담당자만 열람합니다"); }
@@ -494,7 +503,7 @@
     const text = $("#cText").value.trim().slice(0,300); if(!text) return;
     const name = ($("#cName").value||"").trim().slice(0,20);
     const btn = $("#cSubmit"); btn.disabled = true;
-    try { await backend.comment(name, text); $("#cText").value=""; $("#cCount").textContent="0"; toast("의견이 등록되었습니다. 감사합니다!"); }
+    try { await backend.comment(name, text); $("#cText").value=""; $("#cCount").textContent="0"; toast("의견이 등록되었습니다. 담당자만 확인할 수 있습니다. 감사합니다!"); }
     catch(err){ console.error(err); toast("의견 저장에 실패했습니다. 잠시 후 다시 시도해 주세요."); }
     btn.disabled = false;
   });
